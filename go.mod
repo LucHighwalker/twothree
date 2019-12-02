@@ -1,3 +1,3 @@
-module 23Tree
+module twothree
 
 go 1.13
