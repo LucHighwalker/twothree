@@ -37,6 +37,15 @@ func (t *Tree) Insert(data int) {
 		t.root = &Node{}
 	}
 	t.root.Insert(data)
+	t.RefreshRoot()
+}
+
+func (t *Tree) RefreshRoot() {
+	if t.root.parent == nil {
+		return
+	} else {
+		t.root = t.root.parent
+	}
 }
 
 func (n *Node) Insert(data int) {
@@ -76,13 +85,12 @@ func (n *Node) Insert(data int) {
 	}
 }
 
-func (n *Node) ToParent(data int) *Node {
+func (n *Node) ToParent(data int) {
 	if n.parent == nil {
-		n.parent = &Node{data: [2]*int{&data, nil}}
+		n.parent = &Node{data: [2]*int{&data}, children: [3]*Node{n}}
 	} else {
 		n.parent.Insert(data)
 	}
-	return n.parent
 }
 
 func main() {
@@ -96,6 +104,7 @@ func main() {
 	fmt.Println("inserting 3...")
 	t.Insert(3)
 	fmt.Println(t.root.data)
-	fmt.Println(t.root.parent.data)
-	fmt.Println(*t.root.parent.data[0])
+	fmt.Println(t.root.children)
+	fmt.Println(t.root.children[0].data)
+	// fmt.Println(t.root.parent.data)
 }
