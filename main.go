@@ -41,8 +41,6 @@ func (t *Tree) Insert(data int) {
 
 func (n *Node) Insert(data int) {
 	length := dataLen(n.data)
-	fmt.Println("Inserting data to root node")
-	fmt.Println(data, length)
 	switch length {
 	case 0:
 		n.data[0] = &data
@@ -59,18 +57,45 @@ func (n *Node) Insert(data int) {
 		break
 
 	case 2:
-		// shift up to parent and split
+		fmt.Println("inserting a third data")
+		left := *n.data[0]
+		right := *n.data[1]
+		if left > data {
+			// data becomes left and left gets pushed up
+			n.data[0] = &data
+			n.ToParent(left)
+		} else if right < data {
+			// data becomes right and right gets pushed up
+			n.data[1] = &data
+			n.ToParent(right)
+		} else {
+			// data gets pushed up
+			n.ToParent(data)
+		}
 		break
 	}
 }
 
-// if len(n.data) == 0 {
-// 	n.data[0] = &data
-// }
+func (n *Node) ToParent(data int) *Node {
+	if n.parent == nil {
+		n.parent = &Node{data: [2]*int{&data, nil}}
+	} else {
+		n.parent.Insert(data)
+	}
+	return n.parent
+}
 
 func main() {
 	t := &Tree{}
 	t.Insert(1)
 	fmt.Println("Root")
 	fmt.Println(t.root.data)
+	t.Insert(2)
+	fmt.Println("inserted 2")
+	fmt.Println(t.root.data)
+	fmt.Println("inserting 3...")
+	t.Insert(3)
+	fmt.Println(t.root.data)
+	fmt.Println(t.root.parent.data)
+	fmt.Println(*t.root.parent.data[0])
 }
