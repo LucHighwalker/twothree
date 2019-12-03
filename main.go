@@ -233,21 +233,43 @@ func (n *node) split() (*node, *node) {
 	return left, right
 }
 
+// node.toString() returns a string representation of the node
+func (n *node) toString() string {
+	var s string
+
+	if dataLen(n.data) == 2 {
+		s = fmt.Sprintf("[ %d | %d ]", *n.data[0], *n.data[1])
+	} else {
+		s = fmt.Sprintf("[ %d | <nil> ]", *n.data[0])
+	}
+
+	childLength := childLen(n.children)
+
+	if childLength == 3 {
+		s += "\n/   |   \\"
+	} else if childLength == 2 {
+		s += "\n/     \\"
+	}
+
+	return s
+}
+
 func main() {
 	t := &Tree{}
 	t.Insert(1)
 	fmt.Println("Root")
-	fmt.Println(t.root.data)
+	fmt.Println(t.root.toString())
 
 	t.Insert(2)
 	fmt.Println("inserted 2")
-	fmt.Println(t.root.data)
+	fmt.Println(t.root.toString())
 
 	fmt.Println("inserting 3...")
 	t.Insert(3)
-	fmt.Println(t.root.data)
+	fmt.Println(t.root.toString())
 	fmt.Println(t.root.children)
-	fmt.Println(t.root.children[0].data)
+	fmt.Println(t.root.children[0].toString())
+	fmt.Println(t.root.children[1].toString())
 
 	fmt.Println("finding node for 4")
 	n := t.FindNode(4)
@@ -255,6 +277,8 @@ func main() {
 	fmt.Println(*n.data[0])
 
 	t.Insert(4)
+	fmt.Println(t.root.children[0].toString())
+	fmt.Println(t.root.children[1].toString())
 	t.Insert(5)
 	t.Insert(6)
 	t.Insert(7)
@@ -263,5 +287,5 @@ func main() {
 	t.Insert(10)
 
 	fmt.Println("new root after a bunch of inserts:")
-	fmt.Println(*t.root.data[0])
+	fmt.Println(t.root.toString())
 }
