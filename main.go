@@ -35,14 +35,6 @@ func childLen(data [3]*Node) int {
 	return count
 }
 
-func (t *Tree) Insert(data int) {
-	if t.root == nil {
-		t.root = &Node{}
-	}
-	t.root.insert(data)
-	t.refreshRoot()
-}
-
 func (t *Tree) refreshRoot() {
 	if t.root.parent == nil {
 		return
@@ -51,9 +43,57 @@ func (t *Tree) refreshRoot() {
 	}
 }
 
+func (t *Tree) FindNode(data int) *Node {
+	return t.root.findNode(data)
+}
+
+func (n *Node) findNode(data int) *Node {
+	switch dataLen(n.data) {
+	case 1:
+		if data < *n.data[0] {
+			if n.children[0] != nil {
+				return n.children[0].findNode(data)
+			}
+		} else {
+			if n.children[1] != nil {
+				return n.children[1].findNode(data)
+			}
+		}
+		break
+
+	case 2:
+		if data < *n.data[0] {
+			if n.children[0] != nil {
+				return n.children[0].findNode(data)
+			}
+		} else if data < *n.data[1] {
+			if n.children[1] != nil {
+				return n.children[1].findNode(data)
+			}
+		} else {
+			if n.children[2] != nil {
+				return n.children[2].findNode(data)
+			}
+		}
+		break
+
+	}
+	return n
+}
+
+func (t *Tree) Insert(data int) {
+	if t.root == nil {
+		t.root = &Node{}
+		t.root.insert(data)
+	} else {
+		node := t.FindNode(data)
+		node.insert(data)
+		t.refreshRoot()
+	}
+}
+
 func (n *Node) insert(data int) {
-	length := dataLen(n.data)
-	switch length {
+	switch dataLen(n.data) {
 	case 0:
 		n.data[0] = &data
 		break
@@ -128,13 +168,20 @@ func main() {
 	t.Insert(1)
 	fmt.Println("Root")
 	fmt.Println(t.root.data)
+
 	t.Insert(2)
 	fmt.Println("inserted 2")
 	fmt.Println(t.root.data)
+
 	fmt.Println("inserting 3...")
 	t.Insert(3)
 	fmt.Println(t.root.data)
 	fmt.Println(t.root.children)
 	fmt.Println(t.root.children[0].data)
+
+	fmt.Println("finding node for 4")
+	node := t.FindNode(4)
+	fmt.Println(node.data)
+	fmt.Println(*node.data[0])
 	// fmt.Println(t.root.parent.data)
 }
