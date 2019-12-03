@@ -79,7 +79,7 @@ type node struct {
 	parent   *node
 }
 
-// Node.insert(data) inserts the data into the node.
+// node.insert(data) inserts the data into the node.
 func (n *node) insert(data int) {
 	switch dataLen(n.data) {
 	case 0:
@@ -116,12 +116,12 @@ func (n *node) insert(data int) {
 			// data gets pushed up
 			n.toParent(data)
 		}
-		n.split()
+		// n.split()
 		break
 	}
 }
 
-// Node.findNode(data) recursive method to find the node that data belongs to or should
+// node.findNode(data) recursive method to find the node that data belongs to or should
 func (n *node) findNode(data int) *node {
 	// switch to handle two and three nodes slighlty differently
 	switch dataLen(n.data) {
@@ -158,7 +158,7 @@ func (n *node) findNode(data int) *node {
 	return n
 }
 
-// Node.toParent(data) pushes data to the node's parent
+// node.toParent(data) pushes data to the node's parent
 func (n *node) toParent(data int) {
 	if n.parent == nil {
 		n.parent = &node{data: [2]*int{&data}, children: [3]*node{n}}
@@ -167,34 +167,52 @@ func (n *node) toParent(data int) {
 	}
 }
 
-// Node.split() splits the node and reassigns the parent's children.
-// TODO: Finish other cases
-// TODO: Might be better to split from the parent down?
-func (n *node) split() {
+// node.split() splits the node into 2 nodes and returns them
+func (n *node) split() (*node, *node) {
 	if n.parent == nil {
 		log.Fatal("Cannot split a node without a parent")
 	}
-
-	dataLength := dataLen(n.data)
-
-	if dataLength < 2 {
+	if dataLen(n.data) < 2 {
 		log.Fatal("Cannot split a node with singular data")
 	}
 
-	parentLength := dataLen(n.parent.data)
-	// parentChildren := childLen(n.parent.children)
+	left := &node{parent: n.parent}
+	left.insert(*n.data[0])
 
-	leftNode := &node{parent: n.parent}
-	leftNode.insert(*n.data[0])
+	right := &node{parent: n.parent}
+	right.insert(*n.data[1])
 
-	rightNode := &node{parent: n.parent}
-	rightNode.insert(*n.data[1])
-
-	switch parentLength {
-	case 1:
-		n.parent.children = [3]*node{leftNode, rightNode}
-	}
+	return left, right
 }
+
+// node.split() splits the node and reassigns the parent's children.
+// TODO: Finish other cases
+// TODO: Might be better to split from the parent down?
+// func (n *node) split() {
+// 	if n.parent == nil {
+// 		log.Fatal("Cannot split a node without a parent")
+// 	}
+
+// 	dataLength := dataLen(n.data)
+
+// 	if dataLength < 2 {
+// 		log.Fatal("Cannot split a node with singular data")
+// 	}
+
+// 	parentLength := dataLen(n.parent.data)
+// 	// parentChildren := childLen(n.parent.children)
+
+// 	leftNode := &node{parent: n.parent}
+// 	leftNode.insert(*n.data[0])
+
+// 	rightNode := &node{parent: n.parent}
+// 	rightNode.insert(*n.data[1])
+
+// 	switch parentLength {
+// 	case 1:
+// 		n.parent.children = [3]*node{leftNode, rightNode}
+// 	}
+// }
 
 func main() {
 	t := &Tree{}
