@@ -5,7 +5,7 @@ import (
 	"log"
 )
 
-//---------------------------------------------Helpers--------------------------//
+//---------------------------------------------Helpers-------------------------//
 
 // dataLen counts the amount of non-nil elements in a node's data array
 func dataLen(data [2]*int) int {
@@ -19,10 +19,10 @@ func dataLen(data [2]*int) int {
 }
 
 // childLen counts the amount of non-nil elements in a node's children array
-func childLen(data [3]*node) int {
+func childLen(children [3]*node) int {
 	count := 0
 	for i := 0; i < 3; i++ {
-		if data[i] != nil {
+		if children[i] != nil {
 			count++
 		}
 	}
@@ -30,6 +30,8 @@ func childLen(data [3]*node) int {
 }
 
 //---------------------------------------------Tree----------------------------//
+
+// Tree struct for a two-three tree
 type Tree struct {
 	root *node
 }
@@ -69,6 +71,8 @@ func (t *Tree) refreshRoot() {
 }
 
 //---------------------------------------------Node----------------------------//
+
+// node struct for a two-three tree
 type node struct {
 	data     [2]*int
 	children [3]*node
