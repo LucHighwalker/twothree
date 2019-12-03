@@ -36,11 +36,11 @@ func (t *Tree) Insert(data int) {
 	if t.root == nil {
 		t.root = &Node{}
 	}
-	t.root.Insert(data)
-	t.RefreshRoot()
+	t.root.insert(data)
+	t.refreshRoot()
 }
 
-func (t *Tree) RefreshRoot() {
+func (t *Tree) refreshRoot() {
 	if t.root.parent == nil {
 		return
 	} else {
@@ -48,7 +48,7 @@ func (t *Tree) RefreshRoot() {
 	}
 }
 
-func (n *Node) Insert(data int) {
+func (n *Node) insert(data int) {
 	length := dataLen(n.data)
 	switch length {
 	case 0:
@@ -72,24 +72,24 @@ func (n *Node) Insert(data int) {
 		if left > data {
 			// data becomes left and left gets pushed up
 			n.data[0] = &data
-			n.ToParent(left)
+			n.toParent(left)
 		} else if right < data {
 			// data becomes right and right gets pushed up
 			n.data[1] = &data
-			n.ToParent(right)
+			n.toParent(right)
 		} else {
 			// data gets pushed up
-			n.ToParent(data)
+			n.toParent(data)
 		}
 		break
 	}
 }
 
-func (n *Node) ToParent(data int) {
+func (n *Node) toParent(data int) {
 	if n.parent == nil {
 		n.parent = &Node{data: [2]*int{&data}, children: [3]*Node{n}}
 	} else {
-		n.parent.Insert(data)
+		n.parent.insert(data)
 	}
 }
 
