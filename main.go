@@ -5,16 +5,9 @@ import (
 	"log"
 )
 
-type Tree struct {
-	root *Node
-}
-type Node struct {
-	data     [2]*int
-	children [3]*Node
-	parent   *Node
-	tree     *Tree
-}
+//---------------------------------------------Helpers--------------------------//
 
+// dataLen counts the amount of non-nil elements in a node's data array
 func dataLen(data [2]*int) int {
 	count := 0
 	for i := 0; i < 2; i++ {
@@ -25,6 +18,7 @@ func dataLen(data [2]*int) int {
 	return count
 }
 
+// childLen counts the amount of non-nil elements in a node's children array
 func childLen(data [3]*Node) int {
 	count := 0
 	for i := 0; i < 3; i++ {
@@ -35,6 +29,36 @@ func childLen(data [3]*Node) int {
 	return count
 }
 
+//---------------------------------------------Tree----------------------------//
+type Tree struct {
+	root *Node
+}
+
+// Tree.FindNode(data) initiatiates the recursive findNode method on the root node.
+func (t *Tree) FindNode(data int) *Node {
+	if t.root != nil {
+		return t.root.findNode(data)
+	} else {
+		return nil
+	}
+}
+
+// Tree.Insert(data) inserts the given data into the tree.
+// TODO: Utilize FindNode's return of a nil value when tree is empty
+func (t *Tree) Insert(data int) {
+	if t.root == nil {
+		t.root = &Node{}
+		t.root.insert(data)
+	} else {
+		node := t.FindNode(data)
+		node.insert(data)
+		t.refreshRoot()
+	}
+}
+
+// Tree.refreshRoot() makes sure that the root is the top level node.
+// If it isn't the top level node, the root is assigned to the top level node
+// TODO: make into recursive function to get the true root.
 func (t *Tree) refreshRoot() {
 	if t.root.parent == nil {
 		return
@@ -43,11 +67,58 @@ func (t *Tree) refreshRoot() {
 	}
 }
 
-func (t *Tree) FindNode(data int) *Node {
-	return t.root.findNode(data)
+//---------------------------------------------Node----------------------------//
+type Node struct {
+	data     [2]*int
+	children [3]*Node
+	parent   *Node
 }
 
+// Node.insert(data) inserts the data into the node.
+func (n *Node) insert(data int) {
+	switch dataLen(n.data) {
+	case 0:
+		// if node has no data
+		n.data[0] = &data
+		break
+
+	case 1:
+		stored := *n.data[0]
+		if data < stored {
+			// if data is smaller than stored data
+			// move stored data to the right and insert
+			n.data[0] = &data
+			n.data[1] = &stored
+		} else {
+			// otherwise, insert data to the right
+			n.data[1] = &data
+		}
+		break
+
+	case 2:
+		// if node is already a three node
+		left := *n.data[0]
+		right := *n.data[1]
+		if left > data {
+			// data becomes left and left gets pushed up
+			n.data[0] = &data
+			n.toParent(left)
+		} else if right < data {
+			// data becomes right and right gets pushed up
+			n.data[1] = &data
+			n.toParent(right)
+		} else {
+			// data gets pushed up
+			n.toParent(data)
+		}
+		n.split()
+		break
+	}
+}
+
+// Node.findNode(data) recursive method to find the node that data belongs to or should
 func (n *Node) findNode(data int) *Node {
+	// switch to handle two and three nodes slighlty differently
 	switch dataLen(n.data) {
 	case 1:
 		if data < *n.data[0] {
@@ -78,57 +149,11 @@ func (n *Node) findNode(data int) *Node {
 		break
 
 	}
+	// node has been found
 	return n
 }
 
-func (t *Tree) Insert(data int) {
-	if t.root == nil {
-		t.root = &Node{}
-		t.root.insert(data)
-	} else {
-		node := t.FindNode(data)
-		node.insert(data)
-		t.refreshRoot()
-	}
-}
-
-func (n *Node) insert(data int) {
-	switch dataLen(n.data) {
-	case 0:
-		n.data[0] = &data
-		break
-
-	case 1:
-		stored := *n.data[0]
-		if data < stored {
-			n.data[0] = &data
-			n.data[1] = &stored
-		} else {
-			n.data[1] = &data
-		}
-		break
-
-	case 2:
-		fmt.Println("inserting a third data")
-		left := *n.data[0]
-		right := *n.data[1]
-		if left > data {
-			// data becomes left and left gets pushed up
-			n.data[0] = &data
-			n.toParent(left)
-		} else if right < data {
-			// data becomes right and right gets pushed up
-			n.data[1] = &data
-			n.toParent(right)
-		} else {
-			// data gets pushed up
-			n.toParent(data)
-		}
-		n.split()
-		break
-	}
-}
-
+// Node.toParent(data) pushes data to the node's parent
 func (n *Node) toParent(data int) {
 	if n.parent == nil {
 		n.parent = &Node{data: [2]*int{&data}, children: [3]*Node{n}}
@@ -137,6 +162,9 @@ func (n *Node) toParent(data int) {
 	}
 }
 
+// Node.split() splits the node and reassigns the parent's children.
+// TODO: Finish other cases
+// TODO: Might be better to split from the parent down?
 func (n *Node) split() {
 	if n.parent == nil {
 		log.Fatal("Cannot split a node without a parent")
