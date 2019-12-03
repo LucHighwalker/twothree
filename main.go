@@ -1,6 +1,9 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"log"
+)
 
 type Tree struct {
 	root *Node
@@ -81,6 +84,7 @@ func (n *Node) insert(data int) {
 			// data gets pushed up
 			n.toParent(data)
 		}
+		n.split()
 		break
 	}
 }
@@ -90,6 +94,32 @@ func (n *Node) toParent(data int) {
 		n.parent = &Node{data: [2]*int{&data}, children: [3]*Node{n}}
 	} else {
 		n.parent.insert(data)
+	}
+}
+
+func (n *Node) split() {
+	if n.parent == nil {
+		log.Fatal("Cannot split a node without a parent")
+	}
+
+	dataLength := dataLen(n.data)
+
+	if dataLength < 2 {
+		log.Fatal("Cannot split a node with singular data")
+	}
+
+	parentLength := dataLen(n.parent.data)
+	// parentChildren := childLen(n.parent.children)
+
+	leftNode := &Node{parent: n.parent}
+	leftNode.insert(*n.data[0])
+
+	rightNode := &Node{parent: n.parent}
+	rightNode.insert(*n.data[1])
+
+	switch parentLength {
+	case 1:
+		n.parent.children = [3]*Node{leftNode, rightNode}
 	}
 }
 
