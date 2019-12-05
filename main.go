@@ -48,13 +48,13 @@ func (t *Tree) FindNode(data int) *node {
 // Tree.Insert(data) inserts the given data into the tree.
 // TODO: Utilize FindNode's return of a nil value when tree is empty
 func (t *Tree) Insert(data int) {
-	if t.root == nil {
-		t.root = &node{}
-		t.root.insert(data)
-	} else {
-		n := t.FindNode(data)
+	n := t.FindNode(data)
+	if n != nil {
 		n.insert(data)
 		t.refreshRoot()
+	} else {
+		t.root = &node{}
+		t.root.insert(data)
 	}
 }
 
