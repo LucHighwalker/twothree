@@ -38,7 +38,6 @@ type Tree struct {
 
 // Tree.FindNode(data) initiatiates the recursive findNode method on the root node.
 func (t *Tree) FindNode(data int) *node {
-	fmt.Printf("\nFinding node for (%d)", data)
 	if t.root != nil {
 		return t.root.findNode(data)
 	} else {
@@ -49,7 +48,6 @@ func (t *Tree) FindNode(data int) *node {
 // Tree.Insert(data) inserts the given data into the tree.
 // TODO: Utilize FindNode's return of a nil value when tree is empty
 func (t *Tree) Insert(data int) {
-	fmt.Printf("\n\n-------------------------inserting: (%d)-----", data)
 	if t.root == nil {
 		t.root = &node{}
 		t.root.insert(data)
@@ -65,14 +63,11 @@ func (t *Tree) Insert(data int) {
 // TODO: make into recursive function to get the true root.
 // TODO: handle empty tree
 func (t *Tree) refreshRoot() {
-	fmt.Println("\nrefreshing root")
 	if t.root.parent == nil {
 		return
 	} else {
 		t.root = t.root.parent
 	}
-	fmt.Println("new root")
-	fmt.Println(t.root.toString())
 	if t.root.parent != nil {
 		log.Fatal("wrong root stupid")
 	}
@@ -89,7 +84,6 @@ type node struct {
 
 // node.insert(data) inserts the data into the node.
 func (n *node) insert(data int) {
-	fmt.Printf("\ninserting (%d) into node:\n%s", data, n.toString())
 	switch dataLen(n.data) {
 	case 0:
 		// if node has no data
@@ -125,7 +119,6 @@ func (n *node) insert(data int) {
 			// data gets pushed up
 			n.toParent(data)
 		}
-		n.parent.validate()
 		break
 	}
 }
@@ -160,7 +153,6 @@ func (n *node) findNode(data int) *node {
 
 	}
 	// node has been found
-	fmt.Printf("\nFound node for (%d):\n%s", data, n.toString())
 	return n
 }
 
@@ -171,15 +163,11 @@ func (n *node) toParent(data int) {
 	} else {
 		n.parent.insert(data)
 	}
-
-	fmt.Printf("pushed (%d) from\n%s\nto\n%s", data, n.toString(), n.parent.toString())
+	n.parent.validate()
 }
 
 // node.validate() ensures that the node is a valid two-three node.
 func (n *node) validate() {
-	fmt.Println("\nvalidating node:")
-	fmt.Println(n.parent)
-	fmt.Println(n.toString())
 	childLength := childLen(n.children)
 	if childLength == 0 {
 		return
@@ -216,18 +204,12 @@ func (n *node) validate() {
 				data := n.data[1]
 				n.data = [2]*int{n.data[0]}
 				n.toParent(*data)
-				n.parent.validate()
 				return
 			}
 		}
 		break
 	}
 
-	fmt.Println("wtf")
-	fmt.Println(n.toString())
-	fmt.Println(n.children[0].toString())
-	// fmt.Println(n.children[1].toString())
-	// fmt.Println(n.children[2].toString())
 	log.Fatal("Could not validate node. Something seems to be wrong....")
 }
 
@@ -247,11 +229,6 @@ func (n *node) split() (*node, *node) {
 	right.insert(*n.data[1])
 
 	if childLen(n.children) > 0 {
-		fmt.Println("splitting node with children")
-		fmt.Println(n.toString())
-		fmt.Println(n.children[0].toString())
-		fmt.Println(n.children[1].toString())
-		fmt.Println(n.children[2].toString())
 
 		if dataLen(n.children[0].data) == 2 {
 			l, r := n.children[0].split()
@@ -267,14 +244,10 @@ func (n *node) split() (*node, *node) {
 			right.children = [3]*node{l, r}
 		}
 
-		fmt.Println("\nNew left node")
-		fmt.Println(left.toString())
-		fmt.Println(left.children[0].toString())
-		fmt.Println(left.children[1].toString())
-		fmt.Println("\nNew right node")
-		fmt.Println(right.toString())
-		fmt.Println(right.children[0].toString())
-		fmt.Println(right.children[1].toString())
+		left.children[0].parent = left
+		left.children[1].parent = left
+		right.children[0].parent = right
+		right.children[1].parent = right
 	}
 
 	return left, right
@@ -298,12 +271,15 @@ func (n *node) toString() string {
 
 	}
 
-	childLength := childLen(n.children)
-
-	if childLength == 3 {
+	switch childLen(n.children) {
+	case 3:
 		s += "\n/   |   \\"
-	} else if childLength == 2 {
+		break
+	case 2:
 		s += "\n/     \\"
+		break
+	case 1:
+		s += "\n   |   "
 	}
 
 	return s
@@ -312,7 +288,7 @@ func (n *node) toString() string {
 func main() {
 	t := &Tree{}
 
-	for i := 1; i < 11; i++ {
+	for i := 1; i < 11111; i++ {
 		t.Insert(i)
 	}
 
