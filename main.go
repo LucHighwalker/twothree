@@ -7,23 +7,25 @@ import (
 
 //---------------------------------------------Helpers-------------------------//
 
-// dataLen counts the amount of non-nil elements in a node's data array
 func dataLen(data [2]*int) int {
 	count := 0
 	for i := 0; i < 2; i++ {
 		if data[i] != nil {
 			count++
+		} else {
+			break
 		}
 	}
 	return count
 }
 
-// childLen counts the amount of non-nil elements in a node's children array
 func childLen(children [3]*node) int {
 	count := 0
 	for i := 0; i < 3; i++ {
 		if children[i] != nil {
 			count++
+		} else {
+			break
 		}
 	}
 	return count
@@ -34,15 +36,6 @@ func childLen(children [3]*node) int {
 // Tree struct for a two-three tree
 type Tree struct {
 	root *node
-}
-
-// Tree.FindNode(data) initiatiates the recursive findNode method on the root node.
-func (t *Tree) FindNode(data int) *node {
-	if t.root != nil {
-		return t.root.findNode(data)
-	} else {
-		return nil
-	}
 }
 
 // Tree.Insert(data) inserts the given data into the tree.
@@ -56,6 +49,23 @@ func (t *Tree) Insert(data int) {
 		t.root = &node{}
 		t.root.insert(data)
 	}
+}
+
+// Tree.FindNode(data) initiatiates the recursive node.findNode(data) method.
+func (t *Tree) FindNode(data int) *node {
+	if t.root != nil {
+		return t.root.findNode(data)
+	} else {
+		return nil
+	}
+}
+
+// Tree.Contains(data) initiates the recursive node.contains(data) method.
+func (t *Tree) Contains(data int) bool {
+	if t.root != nil {
+		return t.root.contains(data)
+	}
+	return false
 }
 
 // Tree.refreshRoot() makes sure that the root is the top level node.
@@ -123,7 +133,7 @@ func (n *node) insert(data int) {
 	}
 }
 
-// node.findNode(data) recursive method to find the node that data belongs to or should
+// node.findNode(data) recursive method to find the node that data should belong to.
 func (n *node) findNode(data int) *node {
 	if data < *n.data[0] {
 		if n.children[0] != nil {
@@ -154,6 +164,39 @@ func (n *node) findNode(data int) *node {
 	}
 	// node has been found
 	return n
+}
+
+// node.contains(data) recursive method to find specific location of data.
+func (n *node) contains(data int) bool {
+	hasChildren := childLen(n.children) > 0
+
+	if data == *n.data[0] {
+		return true
+	} else if hasChildren && data < *n.data[0] {
+		return n.children[0].contains(data)
+	}
+
+	// switch to handle two and three nodes slighlty differently
+	switch dataLen(n.data) {
+	case 1:
+		if hasChildren {
+			return n.children[1].contains(data)
+		}
+		break
+
+	case 2:
+		if data == *n.data[1] {
+			return true
+		} else if hasChildren {
+			if data < *n.data[1] {
+				return n.children[1].contains(data)
+			} else {
+				return n.children[2].contains(data)
+			}
+		}
+		break
+	}
+	return false
 }
 
 // node.toParent(data) pushes data to the node's parent
@@ -295,10 +338,16 @@ func (n *node) toString(children bool) string {
 func main() {
 	t := &Tree{}
 
-	for i := 1; i < 12342; i++ {
+	for i := 0; i < 123420; i++ {
 		t.Insert(i)
 	}
 
-	fmt.Println("new root after a bunch of inserts:")
+	for i := 0; i < 123420; i++ {
+		if t.Contains(i) == false {
+			fmt.Printf("Missing number in tree: %d\n", i)
+		}
+	}
+
+	fmt.Println("the root after a bunch of inserts:")
 	fmt.Println(t.root.toString(true))
 }
