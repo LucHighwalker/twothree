@@ -159,26 +159,25 @@ func (n *node) findNode(data int) *node {
 // node.toParent(data) pushes data to the node's parent
 func (n *node) toParent(data int) {
 	if n.parent == nil {
-		n.parent = &node{data: [2]*int{&data}, children: [3]*node{n}}
-	} else {
-		n.parent.insert(data)
+		n.parent = &node{children: [3]*node{n}}
 	}
+	n.parent.insert(data)
 	n.parent.validate()
 }
 
 // node.validate() ensures that the node is a valid two-three node.
 func (n *node) validate() {
 	childLength := childLen(n.children)
-	if childLength == 0 {
-		return
-	}
 
+	// switch to handle two and three nodes slighlty differently
 	switch dataLen(n.data) {
 	case 1:
 		if childLength == 2 {
+			// a 2 node with 2 children is valid
 			return
 		} else {
 			if dataLen(n.children[0].data) == 2 {
+				// split the child if it is a 3 node
 				left, right := n.children[0].split()
 				n.children = [3]*node{left, right}
 				return
@@ -187,30 +186,26 @@ func (n *node) validate() {
 		break
 
 	case 2:
-		switch childLength {
-		case 3:
+		if childLength == 3 {
+			// a 3 node with 3 children is valid
 			return
-
-		case 2:
+		} else if childLength == 2 {
 			if dataLen(n.children[0].data) == 2 {
+				// if the left node is a 3 node, split it
 				left, middle := n.children[0].split()
 				n.children = [3]*node{left, middle, n.children[1]}
 				return
 			} else if dataLen(n.children[1].data) == 2 {
+				// if the right node is a 3 node, split it
 				middle, right := n.children[1].split()
 				n.children = [3]*node{n.children[0], middle, right}
-				return
-			} else {
-				data := n.data[1]
-				n.data = [2]*int{n.data[0]}
-				n.toParent(*data)
 				return
 			}
 		}
 		break
 	}
 
-	log.Fatal("Could not validate node. Something seems to be wrong....")
+	log.Fatalf("Could not validate node:\n%s\nSomething seems to be wrong....", n.toString(true))
 }
 
 // node.split() splits the node into 2 nodes and returns them
@@ -222,28 +217,32 @@ func (n *node) split() (*node, *node) {
 		log.Fatal("Cannot split a node with singular data")
 	}
 
+	// insert left data into left node
 	left := &node{parent: n.parent}
 	left.insert(*n.data[0])
 
+	// insert right data into right node
 	right := &node{parent: n.parent}
 	right.insert(*n.data[1])
 
 	if childLen(n.children) > 0 {
-
+		// if node has children, split an available
+		// 3 node child and assign the children
 		if dataLen(n.children[0].data) == 2 {
-			l, r := n.children[0].split()
-			left.children = [3]*node{l, r}
+			ll, rr := n.children[0].split()
+			left.children = [3]*node{ll, rr}
 			right.children = [3]*node{n.children[1], n.children[2]}
 		} else if dataLen(n.children[1].data) == 2 {
-			l, r := n.children[1].split()
-			left.children = [3]*node{n.children[0], l}
-			right.children = [3]*node{r, n.children[2]}
+			lr, rl := n.children[1].split()
+			left.children = [3]*node{n.children[0], lr}
+			right.children = [3]*node{rl, n.children[2]}
 		} else if dataLen(n.children[2].data) == 2 {
-			l, r := n.children[2].split()
+			rl, rr := n.children[2].split()
 			left.children = [3]*node{n.children[0], n.children[1]}
-			right.children = [3]*node{l, r}
+			right.children = [3]*node{rl, rr}
 		}
 
+		// assign the new parent of the children
 		left.children[0].parent = left
 		left.children[1].parent = left
 		right.children[0].parent = right
@@ -254,7 +253,7 @@ func (n *node) split() (*node, *node) {
 }
 
 // node.toString() returns a string representation of the node
-func (n *node) toString() string {
+func (n *node) toString(children bool) string {
 	var s string
 
 	switch dataLen(n.data) {
@@ -271,15 +270,23 @@ func (n *node) toString() string {
 
 	}
 
-	switch childLen(n.children) {
-	case 3:
-		s += "\n/   |   \\"
-		break
-	case 2:
-		s += "\n/     \\"
-		break
-	case 1:
-		s += "\n   |   "
+	if children {
+		switch childLen(n.children) {
+		case 3:
+			s += "\n/   |   \\"
+			s += "\n" + n.children[0].toString(false)
+			s += "\n" + n.children[1].toString(false)
+			s += "\n" + n.children[2].toString(false)
+			break
+		case 2:
+			s += "\n/     \\"
+			s += "\n" + n.children[0].toString(false)
+			s += "\n" + n.children[1].toString(false)
+			break
+		case 1:
+			s += "\n   |   "
+			s += "\n" + n.children[0].toString(false)
+		}
 	}
 
 	return s
@@ -288,10 +295,10 @@ func (n *node) toString() string {
 func main() {
 	t := &Tree{}
 
-	for i := 1; i < 11111; i++ {
+	for i := 1; i < 12342; i++ {
 		t.Insert(i)
 	}
 
 	fmt.Println("new root after a bunch of inserts:")
-	fmt.Println(t.root.toString())
+	fmt.Println(t.root.toString(true))
 }
