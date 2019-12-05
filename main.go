@@ -7,6 +7,7 @@ import (
 
 //---------------------------------------------Helpers-------------------------//
 
+// dataLen(data) counts the amount of non-nil elements in a node's data array
 func dataLen(data [2]*int) int {
 	count := 0
 	for i := 0; i < 2; i++ {
@@ -19,6 +20,7 @@ func dataLen(data [2]*int) int {
 	return count
 }
 
+// childLen(children) counts the amount of non-nil elements in a node's children array
 func childLen(children [3]*node) int {
 	count := 0
 	for i := 0; i < 3; i++ {
@@ -39,7 +41,6 @@ type Tree struct {
 }
 
 // Tree.Insert(data) inserts the given data into the tree.
-// TODO: Utilize FindNode's return of a nil value when tree is empty
 func (t *Tree) Insert(data int) {
 	n := t.FindNode(data)
 	if n != nil {
@@ -70,16 +71,11 @@ func (t *Tree) Contains(data int) bool {
 
 // Tree.refreshRoot() makes sure that the root is the top level node.
 // If it isn't the top level node, the root is assigned to the top level node
-// TODO: make into recursive function to get the true root.
-// TODO: handle empty tree
 func (t *Tree) refreshRoot() {
 	if t.root.parent == nil {
 		return
 	} else {
 		t.root = t.root.parent
-	}
-	if t.root.parent != nil {
-		log.Fatal("wrong root stupid")
 	}
 }
 
@@ -135,8 +131,10 @@ func (n *node) insert(data int) {
 
 // node.findNode(data) recursive method to find the node that data should belong to.
 func (n *node) findNode(data int) *node {
+	hasChildren := childLen(n.children) > 0
+
 	if data < *n.data[0] {
-		if n.children[0] != nil {
+		if hasChildren {
 			return n.children[0].findNode(data)
 		}
 	}
@@ -144,18 +142,18 @@ func (n *node) findNode(data int) *node {
 	// switch to handle two and three nodes slighlty differently
 	switch dataLen(n.data) {
 	case 1:
-		if n.children[1] != nil {
+		if hasChildren {
 			return n.children[1].findNode(data)
 		}
 		break
 
 	case 2:
 		if data < *n.data[1] {
-			if n.children[1] != nil {
+			if hasChildren {
 				return n.children[1].findNode(data)
 			}
 		} else {
-			if n.children[2] != nil {
+			if hasChildren {
 				return n.children[2].findNode(data)
 			}
 		}
@@ -248,7 +246,7 @@ func (n *node) validate() {
 		break
 	}
 
-	log.Fatalf("Could not validate node:\n%s\nSomething seems to be wrong....", n.toString(true))
+	log.Fatalf("\nCould not validate node:\n%s\nSomething seems to be wrong....\n", n.toString(true))
 }
 
 // node.split() splits the node into 2 nodes and returns them
