@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"math/rand"
 )
 
 //---------------------------------------------Helpers-------------------------//
@@ -33,6 +34,23 @@ func childLen(children [3]*node) int {
 	return count
 }
 
+func randomNumbers(count int, max int) []int {
+	seed := false
+	if max < 1 {
+		seed = true
+	}
+
+	rands := []int{}
+	for i := 0; i < count; i++ {
+		if seed {
+			rands = append(rands, rand.Intn(max))
+		} else {
+			rands = append(rands, rand.Int())
+		}
+	}
+	return rands
+}
+
 //---------------------------------------------Tree----------------------------//
 
 // Tree struct for a two-three tree
@@ -42,13 +60,21 @@ type Tree struct {
 
 // Tree.Insert(data) inserts the given data into the tree.
 func (t *Tree) Insert(data int) {
-	n := t.FindNode(data)
-	if n != nil {
-		n.insert(data)
-		t.refreshRoot()
-	} else {
-		t.root = &node{}
-		t.root.insert(data)
+	if t.root.contains(data) == false {
+		n := t.FindNode(data)
+		if n != nil {
+			n.insert(data)
+			t.refreshRoot()
+		} else {
+			t.root = &node{}
+			t.root.insert(data)
+		}
+	}
+}
+
+func (t *Tree) InsertMany(data []int) {
+	for i := 0; i < len(data); i++ {
+		t.Insert(data[i])
 	}
 }
 
@@ -347,5 +373,20 @@ func main() {
 	}
 
 	fmt.Println("the root after a bunch of inserts:")
+	fmt.Println(t.root.toString(true))
+
+	t = &Tree{}
+
+	rands := randomNumbers(10, 20)
+
+	t.InsertMany(rands)
+
+	for i := 0; i < len(rands); i++ {
+		if t.Contains(rands[i]) == false {
+			fmt.Printf("Missing number in tree: %d\n", rands[i])
+		}
+	}
+
+	fmt.Println("the root after a bunch of random inserts:")
 	fmt.Println(t.root.toString(true))
 }
