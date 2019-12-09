@@ -22,9 +22,9 @@ func dataLen(data [2]*int) int {
 }
 
 // childLen(children) counts the amount of non-nil elements in a node's children array
-func childLen(children [3]*node) int {
+func childLen(children [4]*node) int {
 	count := 0
-	for i := 0; i < 3; i++ {
+	for i := 0; i < 4; i++ {
 		if children[i] != nil {
 			count++
 		} else {
@@ -35,9 +35,9 @@ func childLen(children [3]*node) int {
 }
 
 func randomNumbers(count int, max int) []int {
-	seed := false
+	seed := true
 	if max < 1 {
-		seed = true
+		seed = false
 	}
 
 	rands := []int{}
@@ -60,7 +60,7 @@ type Tree struct {
 
 // Tree.Insert(data) inserts the given data into the tree.
 func (t *Tree) Insert(data int) {
-	if t.root.contains(data) == false {
+	if t.Contains(data) == false {
 		n := t.FindNode(data)
 		if n != nil {
 			n.insert(data)
@@ -105,12 +105,21 @@ func (t *Tree) refreshRoot() {
 	}
 }
 
+func (t *Tree) PrintTree() {
+	if t.root == nil {
+		fmt.Println("tree is empty")
+		return
+	} else {
+		t.root.visit(stringifyNode)
+	}
+}
+
 //---------------------------------------------Node----------------------------//
 
 // node struct for a two-three tree
 type node struct {
 	data     [2]*int
-	children [3]*node
+	children [4]*node
 	parent   *node
 }
 
@@ -226,97 +235,136 @@ func (n *node) contains(data int) bool {
 // node.toParent(data) pushes data to the node's parent
 func (n *node) toParent(data int) {
 	if n.parent == nil {
-		n.parent = &node{children: [3]*node{n}}
+		n.parent = &node{children: [4]*node{n}}
 	}
+	n.split()
 	n.parent.insert(data)
-	n.parent.validate()
 }
 
-// node.validate() ensures that the node is a valid two-three node.
-func (n *node) validate() {
-	childLength := childLen(n.children)
-
-	// switch to handle two and three nodes slighlty differently
-	switch dataLen(n.data) {
-	case 1:
-		if childLength == 2 {
-			// a 2 node with 2 children is valid
-			return
-		} else {
-			if dataLen(n.children[0].data) == 2 {
-				// split the child if it is a 3 node
-				left, right := n.children[0].split()
-				n.children = [3]*node{left, right}
-				return
-			}
+func (n *node) childIndex(c *node) int {
+	for i := 0; i < 3; i++ {
+		if n.children[i] == c {
+			return i
 		}
-		break
+	}
+	log.Fatal("Child not present in parent")
+	return -1
+}
 
-	case 2:
-		if childLength == 3 {
-			// a 3 node with 3 children is valid
+func (n *node) addChild(c *node) {
+	for i := 0; i < 4; i++ {
+		if n.children[i] == nil {
+			n.children[i] = c
+			c.parent = n
 			return
-		} else if childLength == 2 {
-			if dataLen(n.children[0].data) == 2 {
-				// if the left node is a 3 node, split it
-				left, middle := n.children[0].split()
-				n.children = [3]*node{left, middle, n.children[1]}
-				return
-			} else if dataLen(n.children[1].data) == 2 {
-				// if the right node is a 3 node, split it
-				middle, right := n.children[1].split()
-				n.children = [3]*node{n.children[0], middle, right}
-				return
-			}
 		}
-		break
+	}
+	log.Fatal("No empty child to add child")
+}
+
+func (n *node) pushChildrenLeft(left *node, right *node) {
+	if n.children[0] != nil {
+		log.Fatal("cant push children to left")
 	}
 
-	log.Fatalf("\nCould not validate node:\n%s\nSomething seems to be wrong....\n", n.toString(true))
+	n.children[0] = left
+	if n.children[2] != nil {
+		n.children[3] = n.children[2]
+	}
+	if n.children[1] != nil {
+		n.children[2] = n.children[1]
+	}
+	n.children[1] = right
+
+	left.parent = n
+	right.parent = n
+}
+
+func (n *node) pushChildrenMid(left *node, right *node) {
+	if n.children[1] != nil {
+		log.Fatal("cant push children to mid")
+	}
+
+	n.children[1] = left
+	if n.children[2] != nil {
+		n.children[3] = n.children[2]
+	}
+	n.children[2] = right
+
+	left.parent = n
+	right.parent = n
+}
+
+func (n *node) pushChildrenRight(left *node, right *node) {
+	if n.children[2] != nil {
+		log.Fatal("cant push children to right")
+	}
+
+	n.children[2] = left
+	n.children[3] = right
+
+	left.parent = n
+	right.parent = n
+}
+
+func (n *node) removeChild(c *node) int {
+	index := n.childIndex(c)
+	n.children[index] = nil
+	return index
 }
 
 // node.split() splits the node into 2 nodes and returns them
-func (n *node) split() (*node, *node) {
-	if n.parent == nil {
-		log.Fatal("Cannot split a node without a parent")
-	}
-	if dataLen(n.data) < 2 {
-		log.Fatal("Cannot split a node with singular data")
-	}
-
-	// insert left data into left node
+func (n *node) split() {
 	left := &node{parent: n.parent}
-	left.insert(*n.data[0])
-
-	// insert right data into right node
 	right := &node{parent: n.parent}
+
+	left.insert(*n.data[0])
 	right.insert(*n.data[1])
 
-	if childLen(n.children) > 0 {
-		// if node has children, split an available
-		// 3 node child and assign the children
-		if dataLen(n.children[0].data) == 2 {
-			ll, rr := n.children[0].split()
-			left.children = [3]*node{ll, rr}
-			right.children = [3]*node{n.children[1], n.children[2]}
-		} else if dataLen(n.children[1].data) == 2 {
-			lr, rl := n.children[1].split()
-			left.children = [3]*node{n.children[0], lr}
-			right.children = [3]*node{rl, n.children[2]}
-		} else if dataLen(n.children[2].data) == 2 {
-			rl, rr := n.children[2].split()
-			left.children = [3]*node{n.children[0], n.children[1]}
-			right.children = [3]*node{rl, rr}
-		}
+	switch childLen(n.children) {
+	case 4:
+		left.addChild(n.children[0])
+		left.addChild(n.children[1])
+		right.addChild(n.children[2])
+		right.addChild(n.children[3])
+		break
 
-		// assign the new parent of the children
-		left.children[0].parent = left
-		left.children[1].parent = left
-		right.children[0].parent = right
-		right.children[1].parent = right
+	case 3:
+		log.Fatal("splitting node with 3 children")
+
+	case 2:
+		log.Fatal("splitting node with 2 children")
+		break
+
+	case 1:
+		log.Fatal("splitting node with 1 child")
+		break
 	}
 
-	return left, right
+	switch n.parent.removeChild(n) {
+	case 0:
+		n.parent.pushChildrenLeft(left, right)
+		break
+	case 1:
+		n.parent.pushChildrenMid(left, right)
+		break
+	case 2:
+		n.parent.pushChildrenRight(left, right)
+		break
+	}
+}
+
+func stringifyNode(n *node) {
+	fmt.Println("----node----")
+	fmt.Println(n.toString(true))
+}
+
+func (n *node) visit(f func(n *node)) {
+	f(n)
+	childCount := childLen(n.children)
+	for i := 0; i < childCount; i++ {
+		n.children[i].visit(f)
+	}
 }
 
 // node.toString() returns a string representation of the node
@@ -377,7 +425,7 @@ func main() {
 
 	t = &Tree{}
 
-	rands := randomNumbers(10, 20)
+	rands := randomNumbers(123420, 123420)
 
 	t.InsertMany(rands)
 
@@ -387,6 +435,7 @@ func main() {
 		}
 	}
 
-	fmt.Println("the root after a bunch of random inserts:")
+	fmt.Println("the tree after a bunch of random inserts:")
 	fmt.Println(t.root.toString(true))
+	// t.PrintTree()
 }
