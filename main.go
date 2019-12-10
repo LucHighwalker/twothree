@@ -227,30 +227,6 @@ func (n *node) pushChildren(left, right *node, location int) {
 	}
 }
 
-func (n *node) pushChildrenLeft(left *node, right *node) {
-	n.children[0] = left
-	if n.children[2] != nil {
-		n.children[3] = n.children[2]
-	}
-	if n.children[1] != nil {
-		n.children[2] = n.children[1]
-	}
-	n.children[1] = right
-}
-
-func (n *node) pushChildrenMid(left *node, right *node) {
-	n.children[1] = left
-	if n.children[2] != nil {
-		n.children[3] = n.children[2]
-	}
-	n.children[2] = right
-}
-
-func (n *node) pushChildrenRight(left *node, right *node) {
-	n.children[2] = left
-	n.children[3] = right
-}
-
 func (n *node) removeChild(c *node) int {
 	index := -1
 	for i, child := range n.children {
