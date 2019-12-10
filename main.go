@@ -61,7 +61,7 @@ type Tree struct {
 // Tree.Insert(data) inserts the given data into the tree.
 func (t *Tree) Insert(data int) {
 	if t.Contains(data) == false {
-		n := t.FindNode(data)
+		n := t.FindLeaf(data)
 		if n != nil {
 			n.insert(data)
 			t.refreshRoot()
@@ -79,9 +79,9 @@ func (t *Tree) InsertMany(data []int) {
 }
 
 // Tree.FindNode(data) initiatiates the recursive node.findNode(data) method.
-func (t *Tree) FindNode(data int) *node {
+func (t *Tree) FindLeaf(data int) *node {
 	if t.root != nil {
-		return t.root.findNode(data)
+		return t.root.findLeaf(data)
 	} else {
 		return nil
 	}
@@ -164,13 +164,13 @@ func (n *node) insert(data int) {
 	}
 }
 
-// node.findNode(data) recursive method to find the node that data should belong to.
-func (n *node) findNode(data int) *node {
-	hasChildren := childLen(n.children) > 0
+// node.findNode(data) recursive method to find the the leaf that data should belong to.
+func (n *node) findLeaf(data int) *node {
+	hasChildren := n.children[0] != nil
 
 	if data < *n.data[0] {
 		if hasChildren {
-			return n.children[0].findNode(data)
+			return n.children[0].findLeaf(data)
 		}
 	}
 
@@ -178,18 +178,18 @@ func (n *node) findNode(data int) *node {
 	switch dataLen(n.data) {
 	case 1:
 		if hasChildren {
-			return n.children[1].findNode(data)
+			return n.children[1].findLeaf(data)
 		}
 		break
 
 	case 2:
 		if data < *n.data[1] {
 			if hasChildren {
-				return n.children[1].findNode(data)
+				return n.children[1].findLeaf(data)
 			}
 		} else {
 			if hasChildren {
-				return n.children[2].findNode(data)
+				return n.children[2].findLeaf(data)
 			}
 		}
 		break
@@ -199,9 +199,9 @@ func (n *node) findNode(data int) *node {
 	return n
 }
 
-// node.contains(data) recursive method to find specific location of data.
+// node.contains(data) recursive method returns bool if data exists.
 func (n *node) contains(data int) bool {
-	hasChildren := childLen(n.children) > 0
+	hasChildren := n.children[0] != nil
 
 	if data == *n.data[0] {
 		return true
@@ -241,6 +241,68 @@ func (n *node) toParent(data int) {
 	n.parent.insert(data)
 }
 
+func (n *node) kidnap(c *node) {
+	for i := 0; i < 4; i++ {
+		if n.children[i] == nil {
+			n.children[i] = c
+			c.parent = n
+			return
+		}
+	}
+}
+
+func (n *node) pushChildren(left, right *node, location int) {
+	switch location {
+	case 0:
+		n.children[0] = left
+		if n.children[2] != nil {
+			n.children[3] = n.children[2]
+		}
+		if n.children[1] != nil {
+			n.children[2] = n.children[1]
+		}
+		n.children[1] = right
+		break
+
+	case 1:
+		n.children[1] = left
+		if n.children[2] != nil {
+			n.children[3] = n.children[2]
+		}
+		n.children[2] = right
+		break
+
+	case 2:
+		n.children[2] = left
+		n.children[3] = right
+		break
+	}
+}
+
+func (n *node) pushChildrenLeft(left *node, right *node) {
+	n.children[0] = left
+	if n.children[2] != nil {
+		n.children[3] = n.children[2]
+	}
+	if n.children[1] != nil {
+		n.children[2] = n.children[1]
+	}
+	n.children[1] = right
+}
+
+func (n *node) pushChildrenMid(left *node, right *node) {
+	n.children[1] = left
+	if n.children[2] != nil {
+		n.children[3] = n.children[2]
+	}
+	n.children[2] = right
+}
+
+func (n *node) pushChildrenRight(left *node, right *node) {
+	n.children[2] = left
+	n.children[3] = right
+}
+
 func (n *node) childIndex(c *node) int {
 	for i := 0; i < 3; i++ {
 		if n.children[i] == c {
@@ -251,69 +313,13 @@ func (n *node) childIndex(c *node) int {
 	return -1
 }
 
-func (n *node) addChild(c *node) {
-	for i := 0; i < 4; i++ {
-		if n.children[i] == nil {
-			n.children[i] = c
-			c.parent = n
-			return
-		}
-	}
-	log.Fatal("No empty child to add child")
-}
-
-func (n *node) pushChildrenLeft(left *node, right *node) {
-	if n.children[0] != nil {
-		log.Fatal("cant push children to left")
-	}
-
-	n.children[0] = left
-	if n.children[2] != nil {
-		n.children[3] = n.children[2]
-	}
-	if n.children[1] != nil {
-		n.children[2] = n.children[1]
-	}
-	n.children[1] = right
-
-	left.parent = n
-	right.parent = n
-}
-
-func (n *node) pushChildrenMid(left *node, right *node) {
-	if n.children[1] != nil {
-		log.Fatal("cant push children to mid")
-	}
-
-	n.children[1] = left
-	if n.children[2] != nil {
-		n.children[3] = n.children[2]
-	}
-	n.children[2] = right
-
-	left.parent = n
-	right.parent = n
-}
-
-func (n *node) pushChildrenRight(left *node, right *node) {
-	if n.children[2] != nil {
-		log.Fatal("cant push children to right")
-	}
-
-	n.children[2] = left
-	n.children[3] = right
-
-	left.parent = n
-	right.parent = n
-}
-
 func (n *node) removeChild(c *node) int {
 	index := n.childIndex(c)
 	n.children[index] = nil
 	return index
 }
 
-// node.split() splits the node into 2 nodes and returns them
+// node.split() splits the node into 2 nodes
 func (n *node) split() {
 	left := &node{parent: n.parent}
 	right := &node{parent: n.parent}
@@ -321,37 +327,15 @@ func (n *node) split() {
 	left.insert(*n.data[0])
 	right.insert(*n.data[1])
 
-	switch childLen(n.children) {
-	case 4:
-		left.addChild(n.children[0])
-		left.addChild(n.children[1])
-		right.addChild(n.children[2])
-		right.addChild(n.children[3])
-		break
-
-	case 3:
-		log.Fatal("splitting node with 3 children")
-
-	case 2:
-		log.Fatal("splitting node with 2 children")
-		break
-
-	case 1:
-		log.Fatal("splitting node with 1 child")
-		break
+	if n.children[0] != nil {
+		left.kidnap(n.children[0])
+		left.kidnap(n.children[1])
+		right.kidnap(n.children[2])
+		right.kidnap(n.children[3])
 	}
 
-	switch n.parent.removeChild(n) {
-	case 0:
-		n.parent.pushChildrenLeft(left, right)
-		break
-	case 1:
-		n.parent.pushChildrenMid(left, right)
-		break
-	case 2:
-		n.parent.pushChildrenRight(left, right)
-		break
-	}
+	index := n.parent.removeChild(n)
+	n.parent.pushChildren(left, right, index)
 }
 
 func stringifyNode(n *node) {
@@ -425,7 +409,7 @@ func main() {
 
 	t = &Tree{}
 
-	rands := randomNumbers(123420, 123420)
+	rands := randomNumbers(123420, -1)
 
 	t.InsertMany(rands)
 
