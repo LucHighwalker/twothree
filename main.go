@@ -60,8 +60,7 @@ type Tree struct {
 
 // Tree.Insert(data) inserts the given data into the tree.
 func (t *Tree) Insert(data int) {
-	if t.Contains(data) == false {
-		n := t.FindLeaf(data)
+	if n, exists := t.FindNode(data); exists == false {
 		if n != nil {
 			n.insert(data)
 			t.refreshRoot()
@@ -78,21 +77,12 @@ func (t *Tree) InsertMany(data []int) {
 	}
 }
 
-// Tree.FindNode(data) initiatiates the recursive node.findNode(data) method.
-func (t *Tree) FindLeaf(data int) *node {
-	if t.root != nil {
-		return t.root.findLeaf(data)
-	} else {
-		return nil
-	}
-}
-
 // Tree.Contains(data) initiates the recursive node.contains(data) method.
-func (t *Tree) Contains(data int) bool {
+func (t *Tree) FindNode(data int) (*node, bool) {
 	if t.root != nil {
-		return t.root.contains(data)
+		return t.root.findNode(data)
 	}
-	return false
+	return nil, false
 }
 
 // Tree.refreshRoot() makes sure that the root is the top level node.
@@ -164,72 +154,37 @@ func (n *node) insert(data int) {
 	}
 }
 
-// node.findNode(data) recursive method to find the the leaf that data should belong to.
-func (n *node) findLeaf(data int) *node {
-	hasChildren := n.children[0] != nil
-
-	if data < *n.data[0] {
-		if hasChildren {
-			return n.children[0].findLeaf(data)
-		}
-	}
-
-	// switch to handle two and three nodes slighlty differently
-	switch dataLen(n.data) {
-	case 1:
-		if hasChildren {
-			return n.children[1].findLeaf(data)
-		}
-		break
-
-	case 2:
-		if data < *n.data[1] {
-			if hasChildren {
-				return n.children[1].findLeaf(data)
-			}
-		} else {
-			if hasChildren {
-				return n.children[2].findLeaf(data)
-			}
-		}
-		break
-
-	}
-	// node has been found
-	return n
-}
-
 // node.contains(data) recursive method returns bool if data exists.
-func (n *node) contains(data int) bool {
+func (n *node) findNode(data int) (*node, bool) {
 	hasChildren := n.children[0] != nil
 
 	if data == *n.data[0] {
-		return true
+		return n, true
 	} else if hasChildren && data < *n.data[0] {
-		return n.children[0].contains(data)
+		return n.children[0].findNode(data)
 	}
 
 	// switch to handle two and three nodes slighlty differently
 	switch dataLen(n.data) {
 	case 1:
 		if hasChildren {
-			return n.children[1].contains(data)
+			return n.children[1].findNode(data)
 		}
 		break
 
 	case 2:
 		if data == *n.data[1] {
-			return true
+			return n, true
 		} else if hasChildren {
 			if data < *n.data[1] {
-				return n.children[1].contains(data)
+				return n.children[1].findNode(data)
 			} else {
-				return n.children[2].contains(data)
+				return n.children[2].findNode(data)
 			}
 		}
 		break
 	}
-	return false
+	return n, false
 }
 
 // node.toParent(data) pushes data to the node's parent
@@ -399,7 +354,7 @@ func main() {
 	}
 
 	for i := 0; i < 123420; i++ {
-		if t.Contains(i) == false {
+		if _, b := t.FindNode(i); b == false {
 			fmt.Printf("Missing number in tree: %d\n", i)
 		}
 	}
@@ -409,17 +364,17 @@ func main() {
 
 	t = &Tree{}
 
-	rands := randomNumbers(123420, -1)
+	rands := randomNumbers(10, 10)
 
 	t.InsertMany(rands)
 
 	for i := 0; i < len(rands); i++ {
-		if t.Contains(rands[i]) == false {
+		if _, b := t.FindNode(rands[i]); b == false {
 			fmt.Printf("Missing number in tree: %d\n", rands[i])
 		}
 	}
 
-	fmt.Println("the tree after a bunch of random inserts:")
-	fmt.Println(t.root.toString(true))
-	// t.PrintTree()
+	fmt.Println("the root after a bunch of random inserts:")
+	// fmt.Println(t.root.toString(true))
+	t.PrintTree()
 }
