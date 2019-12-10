@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"math/rand"
 )
 
@@ -11,8 +10,8 @@ import (
 // dataLen(data) counts the amount of non-nil elements in a node's data array
 func dataLen(data [2]*int) int {
 	count := 0
-	for i := 0; i < 2; i++ {
-		if data[i] != nil {
+	for _, d := range data {
+		if d != nil {
 			count++
 		} else {
 			break
@@ -24,8 +23,8 @@ func dataLen(data [2]*int) int {
 // childLen(children) counts the amount of non-nil elements in a node's children array
 func childLen(children [4]*node) int {
 	count := 0
-	for i := 0; i < 4; i++ {
-		if children[i] != nil {
+	for _, c := range children {
+		if c != nil {
 			count++
 		} else {
 			break
@@ -56,6 +55,7 @@ func randomNumbers(count int, max int) []int {
 // Tree struct for a two-three tree
 type Tree struct {
 	root *node
+	Size int
 }
 
 // Tree.Insert(data) inserts the given data into the tree.
@@ -68,12 +68,13 @@ func (t *Tree) Insert(data int) {
 			t.root = &node{}
 			t.root.insert(data)
 		}
+		t.Size++
 	}
 }
 
 func (t *Tree) InsertMany(data []int) {
-	for i := 0; i < len(data); i++ {
-		t.Insert(data[i])
+	for _, d := range data {
+		t.Insert(d)
 	}
 }
 
@@ -124,12 +125,10 @@ func (n *node) insert(data int) {
 	case 1:
 		stored := *n.data[0]
 		if data < stored {
-			// if data is smaller than stored data
-			// move stored data to the right and insert
+			// move existing data to the right
 			n.data[0] = &data
 			n.data[1] = &stored
 		} else {
-			// otherwise, insert data to the right
 			n.data[1] = &data
 		}
 		break
@@ -139,15 +138,12 @@ func (n *node) insert(data int) {
 		left := *n.data[0]
 		right := *n.data[1]
 		if left > data {
-			// data becomes left and left gets pushed up
 			n.data[0] = &data
 			n.toParent(left)
 		} else if right < data {
-			// data becomes right and right gets pushed up
 			n.data[1] = &data
 			n.toParent(right)
 		} else {
-			// data gets pushed up
 			n.toParent(data)
 		}
 		break
@@ -196,14 +192,11 @@ func (n *node) toParent(data int) {
 	n.parent.insert(data)
 }
 
-func (n *node) kidnap(c *node) {
-	for i := 0; i < 4; i++ {
-		if n.children[i] == nil {
-			n.children[i] = c
-			c.parent = n
-			return
-		}
-	}
+func (n *node) adopt(left, right *node) {
+	n.children[0] = left
+	n.children[1] = right
+	left.parent = n
+	right.parent = n
 }
 
 func (n *node) pushChildren(left, right *node, location int) {
@@ -258,18 +251,14 @@ func (n *node) pushChildrenRight(left *node, right *node) {
 	n.children[3] = right
 }
 
-func (n *node) childIndex(c *node) int {
-	for i := 0; i < 3; i++ {
-		if n.children[i] == c {
-			return i
+func (n *node) removeChild(c *node) int {
+	index := -1
+	for i, child := range n.children {
+		if child == c {
+			index = i
+			break
 		}
 	}
-	log.Fatal("Child not present in parent")
-	return -1
-}
-
-func (n *node) removeChild(c *node) int {
-	index := n.childIndex(c)
 	n.children[index] = nil
 	return index
 }
@@ -283,10 +272,8 @@ func (n *node) split() {
 	right.insert(*n.data[1])
 
 	if n.children[0] != nil {
-		left.kidnap(n.children[0])
-		left.kidnap(n.children[1])
-		right.kidnap(n.children[2])
-		right.kidnap(n.children[3])
+		left.adopt(n.children[0], n.children[1])
+		right.adopt(n.children[2], n.children[3])
 	}
 
 	index := n.parent.removeChild(n)
@@ -349,32 +336,16 @@ func (n *node) toString(children bool) string {
 func main() {
 	t := &Tree{}
 
-	for i := 0; i < 123420; i++ {
-		t.Insert(i)
-	}
-
-	for i := 0; i < 123420; i++ {
-		if _, b := t.FindNode(i); b == false {
-			fmt.Printf("Missing number in tree: %d\n", i)
-		}
-	}
-
-	fmt.Println("the root after a bunch of inserts:")
-	fmt.Println(t.root.toString(true))
-
-	t = &Tree{}
-
-	rands := randomNumbers(10, 10)
+	rands := randomNumbers(9000, 123420)
 
 	t.InsertMany(rands)
 
-	for i := 0; i < len(rands); i++ {
-		if _, b := t.FindNode(rands[i]); b == false {
-			fmt.Printf("Missing number in tree: %d\n", rands[i])
+	for _, r := range rands {
+		if _, e := t.FindNode(r); e == false {
+			fmt.Printf("Missing number in tree: %d\n", r)
 		}
 	}
 
-	fmt.Println("the root after a bunch of random inserts:")
-	// fmt.Println(t.root.toString(true))
-	t.PrintTree()
+	fmt.Println("The root after a bunch of random inserts:")
+	fmt.Println(t.root.toString(true))
 }
